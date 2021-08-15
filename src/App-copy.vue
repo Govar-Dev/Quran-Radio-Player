@@ -2,16 +2,16 @@
     <div id="app">
         <div class="player">
             <div class="cover"></div>
-            <!-- <nav class="d-none"> -->
-            <!-- <div class="left">
+            <nav>
+                <!-- <div class="left">
                     <i class="material-icons">menu</i>
                     <h6>Playlist</h6>
                 </div> -->
-            <!-- <div class="right">
+                <!-- <div class="right">
                     <i class="material-icons search">search</i>
                     <i class="material-icons">queue_music</i>
                 </div> -->
-            <!-- </nav> -->
+            </nav>
             <div class="player-ui">
                 <div class="title">
                     <h3>{{ title }}</h3>
@@ -29,12 +29,10 @@
                 <div class="controls">
                     <switches theme="bootstrap" type-bold="true" color="success" label="Azan" v-model="azanEnabled"></switches>
                     <switches theme="bootstrap" type-bold="true" color="info" label="Azkar" v-model="azkarEnabled"></switches>
-                </div>
-                <div class="controls" style="justify-content: center;padding-top: 0px;">
-                    <!-- <i class="material-icons">skip_previous</i> -->
-                    <!-- <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i> -->
-                    <i class="material-icons">play_arrow</i>
-                    <!-- <i @click="nextSound('player')" class="material-icons">skip_next</i> -->
+
+                    <!-- <i class="material-icons">skip_previous</i>
+                    <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i>
+                    <i @click="nextSound('player')" class="material-icons">skip_next</i> -->
                 </div>
             </div>
             <!-- <div class="btn"> -->
@@ -61,18 +59,19 @@
         </div>
 
         <p>
-            <audio-player :html5="true" id="player" ref="player" :sources="items"></audio-player>
-            <audio-player :html5="true" id="secondary" ref="secondary" :sources="['./mp3/1.mp3']"></audio-player>
-            <audio-player :html5="true" id="player2" ref="player2" :sources="player2_items"></audio-player>
+            <!-- <audio-player id="player" ref="player" :sources="items"></audio-player>
+            <audio-player id="secondary" ref="secondary" :sources="['./mp3/Q4.mp3']"></audio-player>
+            <audio-player id="player2" ref="player2" :sources="player2_items"></audio-player> -->
 
-            <audio controls id="bayanyan" src="mp3/zikr/bayanyan.mp3"></audio>
-            <audio controls id="ewaran" src="mp3/zikr/ewaran.mp3"></audio>
+            <audio controls ref="player" id="player" :src="playerSources"></audio>
+
+            <audio controls ref="bayanyan" id="bayanyan" src="mp3/zikr/bayanyan.mp3"></audio>
+            <audio controls ref="ewaran" id="ewaran" src="mp3/zikr/ewaran.mp3"></audio>
         </p>
     </div>
 </template>
 
 <script>
-import AudioPlayer from './Components/audio-player.vue'
 import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
@@ -82,9 +81,13 @@ export default {
     data() {
         return {
             azkarEnabled: true,
-            azanEnabled: true,
+            azanEnabled: false,
 
-            items: ['./mp3/bsmila.mp3',],
+            playerSources: 'mp3/w01.mp3',
+
+            items: [
+                './mp3/w01.mp3',
+            ],
 
             player2: false,
             playing: false,
@@ -92,35 +95,62 @@ export default {
             player_percent: 100,
             SoundIndex: 0,
 
-            sounds: [],
+            sounds: [
+                'mp3/w01.mp3',
+                'mp3/w02.mp3',
+                'mp3/w03.mp3',
+                'mp3/w04.mp3',
+                'mp3/w05.mp3',
+            ],
 
             player2_items: ['./mp3/Azan1.mp3']
         }
     },
     components: {
-        AudioPlayer,
         Switches
     },
     methods: {
-        nextSound(payload) {
+        log(l) {
+            console.log(l);
+        },
+        nextSound() {
 
-            if (payload == 'player' && !this.player2) {
-                this.$refs.secondary.play()
+            if (!this.player2) {
+                let player = document.getElementById('player');
+
+                // this.$refs.secondary.play()
                 setTimeout(() => {
-                    this.SoundIndex = this.sounds.findIndex(x => x == this.items[0]);
+                    this.SoundIndex = this.sounds.findIndex(x => x == this.playerSources);
                     ++this.SoundIndex
                     if (this.SoundIndex == this.sounds.length) {
                         this.SoundIndex = 0
                     }
-                    this.items = [this.sounds[this.SoundIndex]]
+                    // this.items = [this.sounds[this.SoundIndex]]
+                    player.pause()
+                    this.playerSources = this.sounds[this.SoundIndex]
+                    player.setAttribute('src', this.playerSources);
+                    // player.load()
 
                     this.title = this.baseName(this.items[0])
 
-                    setTimeout(() => {
-                        this.$scrollTo('#sound' + this.SoundIndex)
-                        this.$refs.player.play()
-                    }, 0);
-                }, 5500);
+                    this.$scrollTo('#sound' + this.SoundIndex)
+                    // player.play()
+
+                    var thePromise = player.play();
+
+                    if (thePromise != undefined) {
+
+                        thePromise.then(function (_) {
+
+                            player.pause();
+                            player.currentTime = 0;
+
+                        });
+
+                    }
+
+                    // }, 5500);
+                }, 0);
             }
 
         },
@@ -134,36 +164,33 @@ export default {
         //         this.$refs.player.play()
         //     }, 0);
         // }
-
-        importAll(r) {
-            r.keys().forEach(name => {
-
-                // './mp3/player/w01.mp3',
-                let fileName = name.substr(2, name.length);
-                this.sounds.push('./mp3/player/' + fileName)
-
-            });
-            console.log(this.sounds);
-        },
     },
 
     mounted() {
 
+        let player = document.getElementById('player');
+        player.addEventListener("timeupdate", () => {
+            let currentTime = player.currentTime;
+            let duration = player.duration;
+            if (currentTime == duration) {
+                this.nextSound()
+            }
 
-        this.importAll(require.context('../public/mp3/player/', true, /\.mp3$/));
+        });
 
-        this.$root.$on('NextSound', payload => this.nextSound(payload))
+        // this.$root.$on('NextSound', payload => this.nextSound(payload))
 
-        this.$root.$on('ProgressChanging', p => this.player_percent = p)
-        this.$root.$on('Playing', p3 => this.playing = p3)
+        // this.$root.$on('ProgressChanging', p => this.ProgressChanging(p))
+        // this.$root.$on('Playing', p3 => this.playing = p3)
 
 
-        setTimeout(() => {
-            this.$refs.player.play()
-        }, 0);
+        // setTimeout(() => {
+        // this.$refs.player.play()
+        // }, 0);
 
 
         setInterval(() => {
+            return;
             // Azan
             const today = new Date();
             const today_prayers = prayer_times[today.getMonth() + 1][today.getDate()]
@@ -315,8 +342,7 @@ i {
     box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.6);
     position: relative;
     width: 320px;
-    /* height: 510px; */
-    height: 750px;
+    height: 510px;
     background-size: contain;
     background-repeat: no-repeat;
 }
@@ -446,7 +472,6 @@ i {
 .player .music {
     padding: 10px 20px 0px 20px;
     background: #1a1b1e;
-    margin-top: 23px;
     /* margin-top: -26px; */
 }
 .player .music .song-1,
@@ -537,8 +562,7 @@ i {
 .player .music {
     display: block !important;
     overflow-y: scroll !important;
-    height: 503px !important;
-    /* height: 267px !important; */
+    height: 267px !important;
 }
 
 .vue-switcher--bold .vue-switcher__label span {
