@@ -26,10 +26,13 @@
                         <div class="circle" :style="'margin-left:' + (player_percent * 4.9) + 'px'"></div>
                     </div>
                 </div>
-                <div class="controls hidden">
-                    <i class="material-icons">skip_previous</i>
+                <div class="controls">
+                    <switches theme="bootstrap" type-bold="true" color="success" label="Azan" v-model="azanEnabled"></switches>
+                    <switches theme="bootstrap" type-bold="true" color="info" label="Azkar" v-model="azkarEnabled"></switches>
+
+                    <!-- <i class="material-icons">skip_previous</i>
                     <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i>
-                    <i @click="nextSound('player')" class="material-icons">skip_next</i>
+                    <i @click="nextSound('player')" class="material-icons">skip_next</i> -->
                 </div>
             </div>
             <div class="btn">
@@ -58,7 +61,10 @@
         <p>
             <audio-player id="player" ref="player" :sources="items"></audio-player>
             <audio-player id="secondary" ref="secondary" :sources="['./mp3/Q4.mp3']"></audio-player>
-            <audio-player id="azan" ref="azan" :sources="['./mp3/Azan1.mp3']"></audio-player>
+            <audio-player id="player2" ref="player2" :sources="player2_items"></audio-player>
+
+            <audio controls id="bayanyan" src="mp3/zikr/bayanyan.mp3"></audio>
+            <audio controls id="ewaran" src="mp3/zikr/ewaran.mp3"></audio>
         </p>
     </div>
 </template>
@@ -66,16 +72,21 @@
 <script>
 import AudioPlayer from './Components/audio-player.vue'
 import prayer_times from './prayer_times.js';
+import moment from 'moment'
+import Switches from 'vue-switches';
 
 export default {
     name: 'App',
     data() {
         return {
+            azkarEnabled: true,
+            azanEnabled: false,
+
             items: [
                 './mp3/w01.mp3',
             ],
 
-            azan: false,
+            player2: false,
             playing: false,
             title: 'Quran Radio',
             player_percent: 100,
@@ -87,16 +98,19 @@ export default {
                 './mp3/w03.mp3',
                 './mp3/w04.mp3',
                 './mp3/w05.mp3',
-            ]
+            ],
+
+            player2_items: ['./mp3/Azan1.mp3']
         }
     },
     components: {
-        AudioPlayer
+        AudioPlayer,
+        Switches
     },
     methods: {
         nextSound(payload) {
 
-            if (payload == 'player' && !this.azan) {
+            if (payload == 'player' && !this.player2) {
                 this.$refs.secondary.play()
                 setTimeout(() => {
                     this.SoundIndex = this.sounds.findIndex(x => x == this.items[0]);
@@ -142,6 +156,7 @@ export default {
 
 
         setInterval(() => {
+            // Azan
             const today = new Date();
             const today_prayers = prayer_times[today.getMonth() + 1][today.getDate()]
             const fullTime = this.formatTime().hour + ':' + this.formatTime().minute
@@ -155,28 +170,81 @@ export default {
                 5: 'Isha',
             };
 
-            // console.log(today_prayers.split('|'));
-            // console.log(today_prayers.split('|').includes(fullTime));
             let today_prayers_arr = today_prayers.split('|')
             let today_prayers_index = today_prayers_arr.findIndex(x => x == fullTime)
 
-            if (today_prayers_arr.includes(fullTime) && !this.azan) {
+            if (today_prayers_arr.includes(fullTime) && !this.player2 && today_prayers_index != 1 && this.azanEnabled) {
 
+                this.player2_items = ['./mp3/Azan1.mp3']
+                setTimeout(() => {
+                    this.$refs.secondary.stop()
+                    this.$refs.player.stop()
+
+                    this.$refs.player2.stop()
+
+                    this.$refs.player2.play()
+
+                    this.player2 = true
+                    console.log('Azan')
+                    console.log(types[today_prayers_index])
+                    console.log(today_prayers_arr[today_prayers_index])
+
+                    setTimeout(() => {
+                        this.player2 = false
+                        this.$refs.player2.stop()
+                        this.nextSound('player')
+                    }, this.$refs.player2.duration * 1000);
+                    console.log(this.$refs.player2.duration * 1000);
+                }, 0);
+
+            }
+
+
+            // Azkar
+            // Bayanyan
+            let bayanyan_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[1]).add(1, 'hours').format("h:mm");
+            let ewaran_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[4]).subtract(1, 'hours').format("h:mm");
+
+            let bayanyan_selector = document.querySelector("#bayanyan")
+            let ewaran_selector = document.querySelector("#ewaran")
+
+            if ((bayanyan_time == fullTime || ewaran_time == fullTime) && !this.player2 && this.azkarEnabled) {
+
+                this.$refs.player2.stop()
                 this.$refs.secondary.stop()
                 this.$refs.player.stop()
 
-                this.$refs.azan.play()
 
-                this.azan = true
-                console.log('Azan')
-                console.log(types[today_prayers_index])
-                console.log(today_prayers_arr[today_prayers_index])
+                this.player2 = true
+                if (bayanyan_time == fullTime) {
+                    bayanyan_selector.pause()
+                    bayanyan_selector.currentTime = 0;
+                    bayanyan_selector.play()
 
-                setTimeout(() => {
-                    this.azan = false
-                    this.$refs.azan.stop()
-                    this.nextSound('player')
-                }, 100000);
+                    setTimeout(() => {
+                        this.player2 = false
+                        bayanyan_selector.pause()
+                        bayanyan_selector.currentTime = 0;
+                        ewaran_selector.pause()
+                        ewaran_selector.currentTime = 0;
+
+                    }, bayanyan_selector.duration * 1000);
+                }
+
+                if (ewaran_time == fullTime) {
+                    ewaran_selector.pause()
+                    ewaran_selector.currentTime = 0;
+                    ewaran_selector.play()
+
+                    setTimeout(() => {
+                        this.player2 = false
+                        bayanyan_selector.pause()
+                        bayanyan_selector.currentTime = 0;
+                        ewaran_selector.pause()
+                        ewaran_selector.currentTime = 0;
+
+                    }, ewaran_selector.duration * 1000);
+                }
 
             }
 
@@ -460,5 +528,11 @@ i {
     display: block !important;
     overflow-y: scroll !important;
     height: 267px !important;
+}
+
+.vue-switcher--bold .vue-switcher__label span {
+    color: #fff !important;
+    font-size: 20px !important;
+    padding-bottom: 14px !important;
 }
 </style>

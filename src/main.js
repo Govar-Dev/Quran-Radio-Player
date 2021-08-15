@@ -6,6 +6,7 @@ import VueLodash from 'vue-lodash'
 
 Vue.config.productionTip = false
 import WAudioplayerVue from 'w-audioplayer-vue'
+
 Vue.component('w-audioplayer-vue', WAudioplayerVue)
 Vue.use(VueLodash, { lodash: lodash })
 
