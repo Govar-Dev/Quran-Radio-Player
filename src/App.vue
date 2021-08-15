@@ -21,33 +21,33 @@
                     <p>Adele</p>
                     <i class="material-icons">volume_up</i>
                 </div>
-                <div class="progress hidden">
-                    <div class="played" :style="'width:' + player_percent">
-                        <div class="circle"></div>
+                <div class="progress">
+                    <div class="played" :style="'width:' + player_percent + '%'">
+                        <div class="circle" :style="'margin-left:' + (player_percent * 4.9) + 'px'"></div>
                     </div>
                 </div>
-                <div class="controls">
+                <div class="controls hidden">
                     <i class="material-icons">skip_previous</i>
-                    <i class="material-icons">play_arrow</i>
-                    <i class="material-icons">skip_next</i>
+                    <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i>
+                    <i @click="nextSound('player')" class="material-icons">skip_next</i>
                 </div>
             </div>
             <div class="btn">
                 <!-- 		<i class="material-icons">shuffle</i> -->
             </div>
             <div class="music">
-                <div v-for="(item,i) in 10" :key="i" class="song-1">
+                <div :id="'sound' + i" v-for="(sound,i) in sounds" :key="i" class="song-1">
                     <div class="info">
                         <div class="img first"></div>
                         <div class="titles">
-                            <h5>Hello</h5>
-                            <p>Adele</p>
+                            <h5>{{ baseName(sound) }}</h5>
+                            <p>Quran Radio</p>
                         </div>
                     </div>
-                    <!-- <div class="state playing">
+                    <div v-if="SoundIndex==i" class="state playing">
                         <i class="material-icons">equalizer</i>
-                    </div> -->
-                    <div class="state">
+                    </div>
+                    <div v-else class="state">
                         <i class="material-icons">play_arrow</i>
                     </div>
                 </div>
@@ -55,9 +55,11 @@
             </div>
         </div>
 
-        <audio-player class="d-none" id="player" ref="player" :sources="items"></audio-player>
-        <audio-player class="d-none" id="secondary" ref="secondary" :sources="['./mp3/Q4.mp3']"></audio-player>
-        <audio-player class="d-none" id="azan" ref="azan" :sources="['./mp3/Azan1.mp3']"></audio-player>
+        <p>
+            <audio-player id="player" ref="player" :sources="items"></audio-player>
+            <audio-player id="secondary" ref="secondary" :sources="['./mp3/Q4.mp3']"></audio-player>
+            <audio-player id="azan" ref="azan" :sources="['./mp3/Azan1.mp3']"></audio-player>
+        </p>
     </div>
 </template>
 
@@ -74,7 +76,18 @@ export default {
             ],
 
             azan: false,
-            title: 'Quran Radio'
+            playing: false,
+            title: 'Quran Radio',
+            player_percent: 100,
+            SoundIndex: 0,
+
+            sounds: [
+                './mp3/w01.mp3',
+                './mp3/w02.mp3',
+                './mp3/w03.mp3',
+                './mp3/w04.mp3',
+                './mp3/w05.mp3',
+            ]
         }
     },
     components: {
@@ -84,41 +97,43 @@ export default {
         nextSound(payload) {
 
             if (payload == 'player' && !this.azan) {
-
                 this.$refs.secondary.play()
-
                 setTimeout(() => {
-                    let sounds = [
-                        './mp3/w01.mp3',
-                        './mp3/w02.mp3',
-                        './mp3/w03.mp3',
-                        './mp3/w04.mp3',
-                        './mp3/w05.mp3',
-                    ]
-
-                    let nextSoundIndex = sounds.findIndex(x => x == this.items[0]);
-
-                    ++nextSoundIndex
-                    if (nextSoundIndex == sounds.length) {
-                        nextSoundIndex = 0
+                    this.SoundIndex = this.sounds.findIndex(x => x == this.items[0]);
+                    ++this.SoundIndex
+                    if (this.SoundIndex == this.sounds.length) {
+                        this.SoundIndex = 0
                     }
-
-                    this.items = [sounds[nextSoundIndex]]
+                    this.items = [this.sounds[this.SoundIndex]]
 
                     this.title = this.baseName(this.items[0])
 
                     setTimeout(() => {
+                        this.$scrollTo('#sound' + this.SoundIndex)
                         this.$refs.player.play()
                     }, 0);
                 }, 5500);
             }
 
-        }
+        },
+
+        // play(index) {
+        //     this.$refs.secondary.stop()
+        //     this.$refs.player.stop()
+        //     this.items = [this.sounds[index]]
+        //     this.title = this.baseName(this.items[0])
+        //     setTimeout(() => {
+        //         this.$refs.player.play()
+        //     }, 0);
+        // }
     },
 
     mounted() {
 
         this.$root.$on('NextSound', payload => this.nextSound(payload))
+
+        // this.$root.$on('ProgressChanging', p => this.ProgressChanging(p))
+        // this.$root.$on('Playing', p3 => this.playing = p3)
 
 
         setTimeout(() => {
