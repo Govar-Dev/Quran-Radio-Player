@@ -2,17 +2,15 @@
     <div id="app">
         <div class="player">
             <div class="cover"></div>
-            <!-- <nav class="d-none"> -->
-            <!-- <div class="left">
+            <nav class="d-none">
+                <div class="left">
                     <i class="material-icons">menu</i>
-                    <h6>Playlist</h6>
-                </div> -->
-            <!-- <div class="right">
-                    <i class="material-icons search">search</i>
-                    <i class="material-icons">queue_music</i>
-                </div> -->
-            <!-- </nav> -->
-            <div class="player-ui">
+                </div>
+                <div class="right">
+                    <!-- <i @click="app.quit()" class="material-icons search">close</i> -->
+                </div>
+            </nav>
+            <div class="player-ui"  style="-webkit-app-region: drag">
                 <div class="title">
                     <h3>{{ title }}</h3>
                 </div>
@@ -28,14 +26,15 @@
                 </div>
                 <div class="controls">
                     <switches theme="bootstrap" type-bold="true" color="success" label="Azan" v-model="azanEnabled"></switches>
+                    <i class="material-icons">play_arrow</i>
                     <switches theme="bootstrap" type-bold="true" color="info" label="Azkar" v-model="azkarEnabled"></switches>
                 </div>
-                <div class="controls" style="justify-content: center;padding-top: 0px;">
-                    <!-- <i class="material-icons">skip_previous</i> -->
-                    <!-- <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i> -->
-                    <i class="material-icons">play_arrow</i>
-                    <!-- <i @click="nextSound('player')" class="material-icons">skip_next</i> -->
-                </div>
+                <!-- <div class="controls" style="justify-content: center;padding-top: 0px;"> -->
+                <!-- <i class="material-icons">skip_previous</i> -->
+                <!-- <i class="material-icons">{{ playing ? 'pause_arrow' : 'play_arrow' }}</i> -->
+                <!-- <i class="material-icons">play_arrow</i> -->
+                <!-- <i @click="nextSound('player')" class="material-icons">skip_next</i> -->
+                <!-- </div> -->
             </div>
             <!-- <div class="btn"> -->
             <!-- 		<i class="material-icons">shuffle</i> -->
@@ -60,7 +59,7 @@
             </div>
         </div>
 
-        <p>
+        <p class="d-none">
             <audio-player :html5="true" id="player" ref="player" :sources="items"></audio-player>
             <audio-player :html5="true" id="secondary" ref="secondary" :sources="['./mp3/1.mp3']"></audio-player>
             <audio-player :html5="true" id="player2" ref="player2" :sources="player2_items"></audio-player>
@@ -76,6 +75,7 @@ import AudioPlayer from './Components/audio-player.vue'
 import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
+
 
 export default {
     name: 'App',
@@ -367,7 +367,7 @@ i {
 .player .player-ui {
     position: relative;
     z-index: 3;
-    padding-top: 30px;
+    padding-top: 16px;
 }
 .player .player-ui .title {
     display: flex;
@@ -376,7 +376,7 @@ i {
 .player .player-ui .title h3 {
     margin: 0;
     color: white;
-    font-size: 30px;
+    font-size: 20px;
     font-weight: 100;
 }
 .player .player-ui .small {
@@ -524,7 +524,8 @@ i {
 }
 
 .player {
-    min-width: 25% !important;
+    /* min-width: 25% !important; */
+    width: 533px !important;
 }
 
 .player .cover,
@@ -545,5 +546,31 @@ i {
     color: #fff !important;
     font-size: 20px !important;
     padding-bottom: 14px !important;
+}
+
+::-webkit-scrollbar {
+    background-color: #fff;
+    width: 10px;
+}
+
+/* background of the scrollbar except button or resizer */
+::-webkit-scrollbar-track {
+    background-color: #fff;
+}
+::-webkit-scrollbar-track:hover {
+    background-color: #f4f4f4;
+}
+
+/* scrollbar itself */
+::-webkit-scrollbar-thumb {
+    background-color: #babac0;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a0a5;
+}
+
+/* set button(top and bottom of the scrollbar) */
+::-webkit-scrollbar-button {
+    display: none;
 }
 </style>
