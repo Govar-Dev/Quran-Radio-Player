@@ -2,15 +2,17 @@
     <div id="app">
         <div class="player">
             <div class="cover"></div>
-            <nav class="d-none">
-                <div class="left">
-                    <i class="material-icons">menu</i>
-                </div>
-                <div class="right">
-                    <!-- <i @click="app.quit()" class="material-icons search">close</i> -->
-                </div>
+            <nav>
+                <!-- <div class="left" style="-webkit-app-region: drag;cursor: pointer !important;"> -->
+                <i class="material-icons" style="-webkit-app-region: drag;">menu</i>
+                <!-- </div> -->
+                <!-- <div class="right"> -->
+                <i @click="emitMain('player-files-folder')" class="material-icons search">library_music</i>
+                <i @click="muteAll()" class="material-icons search">{{ muted ? 'volume_off' : 'volume_up' }}</i>
+                <i @click="emitMain('close-app')" class="material-icons">close</i>
+                <!-- </div> -->
             </nav>
-            <div class="player-ui"  style="-webkit-app-region: drag">
+            <div class="player-ui">
                 <div class="title">
                     <h3>{{ title }}</h3>
                 </div>
@@ -75,7 +77,7 @@ import AudioPlayer from './Components/audio-player.vue'
 import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
-
+import { ipcRenderer, ipcMain, BrowserWindow, Menu } from 'electron'
 
 export default {
     name: 'App',
@@ -85,6 +87,8 @@ export default {
             azanEnabled: true,
 
             items: ['./mp3/bsmila.mp3',],
+
+            muted: false,
 
             player2: false,
             playing: false,
@@ -103,7 +107,6 @@ export default {
     },
     methods: {
         nextSound(payload) {
-
             if (payload == 'player' && !this.player2) {
                 this.$refs.secondary.play()
                 setTimeout(() => {
@@ -145,10 +148,51 @@ export default {
             });
             console.log(this.sounds);
         },
+
+        muteAll() {
+            this.muted = !this.muted
+
+            let bayanyan_selector = document.querySelector("#bayanyan")
+            let ewaran_selector = document.querySelector("#ewaran")
+
+            bayanyan_selector.muted = !bayanyan_selector.muted
+            ewaran_selector.muted = !ewaran_selector.muted
+
+            this.$refs.player.toggleMute()
+            this.$refs.secondary.toggleMute()
+            this.$refs.player2.toggleMute()
+        },
+
+
+        emitMain(name) {
+            ipcRenderer.send(name)
+        },
+
+        contextMenu() {
+            addEventListener('contextmenu', (e) => {
+                e.preventDefault()
+                ipcRenderer.send('show-context-menu')
+            })
+
+            ipcRenderer.on('context-menu-command', (e, command) => {
+                switch (command) {
+                    case 'refresh':
+                            window.location.reload()
+                        break;
+                
+                    case 'mute':
+                            this.muteAll()
+                        break;
+                
+                    default:
+                        break;
+                }
+            })
+        }
     },
 
     mounted() {
-
+        this.contextMenu()
 
         this.importAll(require.context('../public/mp3/player/', true, /\.mp3$/));
 
@@ -331,6 +375,7 @@ i {
     background-size: cover;
 }
 .player nav {
+    color: #ffffff;
     margin-top: 5px;
     position: relative;
     z-index: 3;

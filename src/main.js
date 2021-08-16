@@ -3,7 +3,6 @@ import App from './App.vue'
 import lodash from 'lodash'
 import VueLodash from 'vue-lodash'
 
-
 Vue.config.productionTip = false
 import WAudioplayerVue from 'w-audioplayer-vue'
 
@@ -29,6 +28,6 @@ Vue.use(VueScrollTo, {
 })
 
 
-window.app = new Vue({
+new Vue({
     render: h => h(App),
 }).$mount('#app')

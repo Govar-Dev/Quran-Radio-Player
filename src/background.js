@@ -1,9 +1,56 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, shell, ipcMain, Menu } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+
+
+ipcMain.on('player-files-folder', (event, arg) => {
+    shell.openPath(app.getAppPath() + '/../public/mp3/player')
+})
+
+ipcMain.on('close-app', (event, arg) => {
+    app.exit(0)
+})
+
+
+// main
+ipcMain.on('show-context-menu', (event) => {
+    const template = [{
+            label: 'Refresh',
+            click: () => { event.sender.send('context-menu-command', 'refresh') }
+        },
+        {
+            label: 'Mute / UnMute',
+            click: () => { event.sender.send('context-menu-command', 'mute') },
+        },
+        { type: 'separator' },
+        {
+            label: 'Open Main Player Folder',
+            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/player') }
+        },
+        {
+            label: 'Open Azan Folder',
+            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/azan') }
+        },
+        {
+            label: 'Open Zikr Folder',
+            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/zikr') }
+        },
+        {
+            label: 'Open MP3 Folder',
+            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3') }
+        },
+        { type: 'separator' },
+        {
+            label: 'Exit',
+            click: () => { app.exit(0) }
+        },
+    ]
+    const menu = Menu.buildFromTemplate(template)
+    menu.popup(BrowserWindow.fromWebContents(event.sender))
+})
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -31,7 +78,7 @@ async function createWindow() {
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         // Load the url of the dev server if in development mode
         await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-            // if (!process.env.IS_TEST) win.webContents.openDevTools()
+        if (!process.env.IS_TEST) win.webContents.openDevTools()
     } else {
         createProtocol('app')
             // Load the index.html when not in development

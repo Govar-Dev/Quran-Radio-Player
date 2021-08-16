@@ -1,7 +1,9 @@
 .DS_Store
 node_modules
 /dist
-/public/mp3/*
+/public/mp3/azan/*
+/public/mp3/player/*
+/public/mp3/zikr/*
 
 
 # local env files
