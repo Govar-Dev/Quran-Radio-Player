@@ -5,14 +5,20 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+let getMp3Dir = '/mp3'
+if (isDevelopment) {
+    getMp3Dir = '/../public/mp3'
+}
 
 ipcMain.on('player-files-folder', (event, arg) => {
-    shell.openPath(app.getAppPath() + '/../public/mp3/player')
+    shell.openPath(app.getAppPath() + getMp3Dir + '/player')
 })
 
 ipcMain.on('close-app', (event, arg) => {
     app.exit(0)
 })
+
+
 
 
 // main
@@ -28,26 +34,35 @@ ipcMain.on('show-context-menu', (event) => {
         { type: 'separator' },
         {
             label: 'Open Main Player Folder',
-            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/player') }
+            click: () => { shell.openPath(app.getAppPath() + getMp3Dir + '/player') }
         },
         {
             label: 'Open Azan Folder',
-            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/azan') }
+            click: () => { shell.openPath(app.getAppPath() + getMp3Dir + '/azan') }
         },
         {
             label: 'Open Zikr Folder',
-            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3/zikr') }
+            click: () => { shell.openPath(app.getAppPath() + getMp3Dir + '/zikr') }
         },
         {
             label: 'Open MP3 Folder',
-            click: () => { shell.openPath(app.getAppPath() + '/../public/mp3') }
+            click: () => { shell.openPath(app.getAppPath() + getMp3Dir + '') }
         },
         { type: 'separator' },
         {
             label: 'Exit',
             click: () => { app.exit(0) }
         },
+        { type: 'separator' },
+        {
+            label: 'Version: 1.0',
+            click: () => {
+                // win.webContents.openDevTools()
+                shell.openExternal('https://www.rwangroup.com/')
+            }
+        },
     ]
+
     const menu = Menu.buildFromTemplate(template)
     menu.popup(BrowserWindow.fromWebContents(event.sender))
 })
@@ -57,9 +72,11 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
+
 async function createWindow() {
     // Create the browser window.
     const win = new BrowserWindow({
+        icon: 'favicon.ico',
         autoHideMenuBar: true,
         frame: false,
         maximizable: false,
@@ -67,22 +84,24 @@ async function createWindow() {
         width: 533,
         height: 750,
         webPreferences: {
-
-            // Use pluginOptions.nodeIntegration, leave this alone
-            // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
+            webSecurity: false,
             nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
             contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
         }
     })
 
+
+    // win.webContents.openDevTools()
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         // Load the url of the dev server if in development mode
         await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-        if (!process.env.IS_TEST) win.webContents.openDevTools()
+            // if (!process.env.IS_TEST) win.webContents.openDevTools()
     } else {
         createProtocol('app')
             // Load the index.html when not in development
-        win.loadURL('app://./index.html')
+            // win.loadURL('app://./index.html')
+        win.loadURL(`file://${process.cwd()}/resources/app/index.html`);
+
     }
 }
 
@@ -105,6 +124,7 @@ app.on('activate', () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async() => {
+
     if (isDevelopment && !process.env.IS_TEST) {
         // Install Vue Devtools
         try {
@@ -114,6 +134,8 @@ app.on('ready', async() => {
         }
     }
     createWindow()
+
+
 })
 
 // Exit cleanly on request from parent process in development mode.

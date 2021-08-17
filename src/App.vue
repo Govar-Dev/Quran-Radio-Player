@@ -47,7 +47,7 @@
                         <div class="img first"></div>
                         <div class="titles">
                             <h5>{{ baseName(sound) }}</h5>
-                            <p>Quran Radio</p>
+                            <p @dblclick="emitMain('developer-console')">Quran Radio</p>
                         </div>
                     </div>
                     <div v-if="SoundIndex==i" class="state playing">
@@ -62,9 +62,10 @@
         </div>
 
         <p class="d-none">
+            <!-- <p> -->
             <audio-player :html5="true" id="player" ref="player" :sources="items"></audio-player>
             <audio-player :html5="true" id="secondary" ref="secondary" :sources="['./mp3/1.mp3']"></audio-player>
-            <audio-player :html5="true" id="player2" ref="player2" :sources="player2_items"></audio-player>
+            <audio-player :html5="true" id="player2" ref="player2" :sources="['./mp3/azan/'+player2_items+'.mp3']"></audio-player>
 
             <audio controls id="bayanyan" src="mp3/zikr/bayanyan.mp3"></audio>
             <audio controls id="ewaran" src="mp3/zikr/ewaran.mp3"></audio>
@@ -77,7 +78,10 @@ import AudioPlayer from './Components/audio-player.vue'
 import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
-import { ipcRenderer, ipcMain, BrowserWindow, Menu } from 'electron'
+import { ipcRenderer } from 'electron'
+const path = require('path')
+const fs = require('fs');
+
 
 export default {
     name: 'App',
@@ -98,7 +102,9 @@ export default {
 
             sounds: [],
 
-            player2_items: ['./mp3/Azan1.mp3']
+            player2_items: '0-Bayany',
+
+            mp3Path: '',
         }
     },
     components: {
@@ -128,26 +134,16 @@ export default {
 
         },
 
-        // play(index) {
-        //     this.$refs.secondary.stop()
-        //     this.$refs.player.stop()
-        //     this.items = [this.sounds[index]]
-        //     this.title = this.baseName(this.items[0])
-        //     setTimeout(() => {
-        //         this.$refs.player.play()
-        //     }, 0);
-        // }
+        // importAll(r) {
+        //     r.keys().forEach(name => {
 
-        importAll(r) {
-            r.keys().forEach(name => {
+        //         // './mp3/player/w01.mp3',
+        //         let fileName = name.substr(2, name.length);
+        //         this.sounds.push('./mp3/player/' + fileName)
 
-                // './mp3/player/w01.mp3',
-                let fileName = name.substr(2, name.length);
-                this.sounds.push('./mp3/player/' + fileName)
-
-            });
-            console.log(this.sounds);
-        },
+        //     });
+        //     console.log(this.sounds);
+        // },
 
         muteAll() {
             this.muted = !this.muted
@@ -177,13 +173,13 @@ export default {
             ipcRenderer.on('context-menu-command', (e, command) => {
                 switch (command) {
                     case 'refresh':
-                            window.location.reload()
+                        window.location.reload()
                         break;
-                
+
                     case 'mute':
-                            this.muteAll()
+                        this.muteAll()
                         break;
-                
+
                     default:
                         break;
                 }
@@ -192,9 +188,23 @@ export default {
     },
 
     mounted() {
+
+
         this.contextMenu()
 
-        this.importAll(require.context('../public/mp3/player/', true, /\.mp3$/));
+        let playerPath = `${process.cwd()}/public/mp3/player/`
+
+        if (!process.execPath.match(/dist[\\/]electron/i)) {
+            playerPath = `${process.cwd()}/resources/app/mp3/player/`
+        }
+
+        // this.importAll(require.context('../public/mp3/player/', true, /\.mp3$/));
+        fs.readdir(playerPath, (err, files) => {
+            files.forEach(file => {
+                if (file.split('.').pop() == 'mp3')
+                    this.sounds.push('./mp3/player/' + file)
+            });
+        });
 
         this.$root.$on('NextSound', payload => this.nextSound(payload))
 
@@ -222,21 +232,34 @@ export default {
                 5: 'Isha',
             };
 
+            let mp3_types = {
+                0: '0-Bayany',
+                1: '0-Bayany',
+                2: '2-Niwaro',
+                3: '3-Asr',
+                4: '4-Ewara',
+                5: '5-Esha',
+            };
+
             let today_prayers_arr = today_prayers.split('|')
             let today_prayers_index = today_prayers_arr.findIndex(x => x == fullTime)
 
             if (today_prayers_arr.includes(fullTime) && !this.player2 && today_prayers_index != 1 && this.azanEnabled) {
+                this.player2 = true
+                this.$refs.player.stop()
+                this.$refs.secondary.stop()
+                this.$refs.player2.stop()
 
-                this.player2_items = ['./mp3/Azan1.mp3']
+                this.player2_items = mp3_types[today_prayers_index]
+                console.log(this.player2_items);
+
                 setTimeout(() => {
-                    this.$refs.secondary.stop()
-                    this.$refs.player.stop()
-
-                    this.$refs.player2.stop()
-
                     this.$refs.player2.play()
+                }, 200);
 
-                    this.player2 = true
+
+                setTimeout(() => {
+
                     console.log('Azan')
                     console.log(types[today_prayers_index])
                     console.log(today_prayers_arr[today_prayers_index])
@@ -247,7 +270,7 @@ export default {
                         this.nextSound('player')
                     }, this.$refs.player2.duration * 1000);
                     console.log(this.$refs.player2.duration * 1000);
-                }, 0);
+                }, 300);
 
             }
 
@@ -307,11 +330,31 @@ export default {
 </script>
 
 <style>
-@import url("https://fonts.googleapis.com/css?family=RobotoDraft:400,500,700,400italic");
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../public/assets/fonts/Material Icons.woff2') format('woff2');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
 
 html {
-    font-family: sans-serif;
     -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
 }
@@ -322,7 +365,7 @@ body {
     height: 100%;
     align-items: center;
     color: #333;
-    font-family: "Roboto", sans-serif;
+    font-family: tahoma;
     font-size: 1em;
     -webkit-font-smoothing: antialiased;
     line-height: 1em;
@@ -370,7 +413,7 @@ i {
     width: 320px;
     height: 250px;
     background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)),
-        url(https://images.unsplash.com/photo-1609599006353-e629aaabfeae?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cXVyYW58ZW58MHx8MHx8&ixlib=rb-1.2.1&w=1000&q=80)
+        url('../public/assets/quran.jpg')
             center bottom;
     background-size: cover;
 }
@@ -524,7 +567,7 @@ i {
 .player .music .song-2 .info .img.first,
 .player .music .song-3 .info .img.first,
 .player .music .song-4 .info .img.first {
-    background: url(https://images.unsplash.com/photo-1609599006353-e629aaabfeae?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cXVyYW58ZW58MHx8MHx8&ixlib=rb-1.2.1&w=1000&q=80)
+    background: url('../public/assets/quran.jpg')
         center center;
     background-size: cover;
 }
