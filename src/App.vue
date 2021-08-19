@@ -4,7 +4,7 @@
             <div class="cover"></div>
             <nav>
                 <!-- <div class="left" style="-webkit-app-region: drag;cursor: pointer !important;"> -->
-                <i class="material-icons" style="-webkit-app-region: drag;">menu</i>
+                <i @click="emitMain('show-context-menu')" class="material-icons">menu</i>
                 <!-- </div> -->
                 <!-- <div class="right"> -->
                 <i @click="emitMain('player-files-folder')" class="material-icons search">library_music</i>
@@ -14,7 +14,7 @@
             </nav>
             <div class="player-ui">
                 <div class="title">
-                    <h3>{{ title }}</h3>
+                    <h3 style="-webkit-app-region: drag;">{{ title }}</h3>
                 </div>
                 <div class="small hidden">
                     <i class="material-icons">replay</i>
@@ -47,11 +47,11 @@
                         <div class="img first"></div>
                         <div class="titles">
                             <h5>{{ baseName(sound) }}</h5>
-                            <p @dblclick="emitMain('developer-console')">Quran Radio</p>
+                            <p>Quran Radio</p>
                         </div>
                     </div>
                     <div v-if="SoundIndex==i" class="state playing">
-                        <i class="material-icons">equalizer</i>
+                        <i @dblclick="!isProduction() ? emitMain('show-developer-tools') : ''" class="material-icons">equalizer</i>
                     </div>
                     <div v-else class="state">
                         <i class="material-icons">play_arrow</i>
@@ -79,7 +79,6 @@ import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
 import { ipcRenderer } from 'electron'
-const path = require('path')
 const fs = require('fs');
 
 
@@ -105,6 +104,7 @@ export default {
             player2_items: '0-Bayany',
 
             mp3Path: '',
+
         }
     },
     components: {
@@ -167,7 +167,7 @@ export default {
         contextMenu() {
             addEventListener('contextmenu', (e) => {
                 e.preventDefault()
-                ipcRenderer.send('show-context-menu')
+                this.emitMain('show-context-menu')
             })
 
             ipcRenderer.on('context-menu-command', (e, command) => {
@@ -184,19 +184,49 @@ export default {
                         break;
                 }
             })
+        },
+
+        isProduction() {
+            return !process.execPath.match(/dist[\\/]electron/i)
         }
     },
 
     mounted() {
+        window.moment = moment
 
 
         this.contextMenu()
 
         let playerPath = `${process.cwd()}/public/mp3/player/`
 
-        if (!process.execPath.match(/dist[\\/]electron/i)) {
+        if (this.isProduction()) {
             playerPath = `${process.cwd()}/resources/app/mp3/player/`
+        } else {
+            this.muteAll()
         }
+
+        // prayerTimes
+        let prayerTimes = {}
+        fs.readFile(playerPath + '../../PrayerTimes.txt', 'utf8', function (err, data) {
+            data.toString().replace(/\r\n/g, '\n').split('\n').forEach(day => {
+                let date = day.split(',')[0]
+                if (date != 'Date') {
+                    prayerTimes[date] = day.split(',').slice(1).join('|')
+                }
+            });
+        });
+
+        let azkarTimes = {}
+        fs.readFile(playerPath + '../../AzkarTimes.txt', 'utf8', function (err, data) {
+            data.toString().replace(/\r\n/g, '\n').split('\n').forEach(day => {
+                let d = day.split('=')
+                if (d[0].toLowerCase() == 'bayanyan')
+                    azkarTimes.bayanyan = d[1].trim()
+
+                if (d[0].toLowerCase() == 'ewaran')
+                    azkarTimes.ewaran = d[1].trim()
+            });
+        });
 
         // this.importAll(require.context('../public/mp3/player/', true, /\.mp3$/));
         fs.readdir(playerPath, (err, files) => {
@@ -220,8 +250,11 @@ export default {
         setInterval(() => {
             // Azan
             const today = new Date();
-            const today_prayers = prayer_times[today.getMonth() + 1][today.getDate()]
-            const fullTime = this.formatTime().hour + ':' + this.formatTime().minute
+            // const today_prayers = prayer_times[today.getMonth() + 1][today.getDate()]
+            let now = moment(new Date())
+            const today_prayers = prayerTimes[now.format("MM-DD")]
+            // const fullTime = this.formatTime().hour + ':' + this.formatTime().minute
+            const fullTime = now.format("hh:mm")
 
             let types = {
                 0: 'Bayani',
@@ -242,6 +275,8 @@ export default {
             };
 
             let today_prayers_arr = today_prayers.split('|')
+
+
             let today_prayers_index = today_prayers_arr.findIndex(x => x == fullTime)
 
             if (today_prayers_arr.includes(fullTime) && !this.player2 && today_prayers_index != 1 && this.azanEnabled) {
@@ -277,13 +312,13 @@ export default {
 
             // Azkar
             // Bayanyan
-            let bayanyan_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[1]).add(1, 'hours').format("h:mm");
-            let ewaran_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[4]).subtract(1, 'hours').format("h:mm");
+            // let bayanyan_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[1]).add(1, 'hours').format("h:mm");
+            // let ewaran_time = moment(moment(new Date()).format("YYYY-MM-DD") + " " + today_prayers_arr[4]).subtract(1, 'hours').format("h:mm");
 
             let bayanyan_selector = document.querySelector("#bayanyan")
             let ewaran_selector = document.querySelector("#ewaran")
 
-            if ((bayanyan_time == fullTime || ewaran_time == fullTime) && !this.player2 && this.azkarEnabled) {
+            if ((azkarTimes.bayanyan == fullTime || azkarTimes.ewaran == fullTime) && !this.player2 && this.azkarEnabled) {
 
                 this.$refs.player2.stop()
                 this.$refs.secondary.stop()
@@ -291,7 +326,7 @@ export default {
 
 
                 this.player2 = true
-                if (bayanyan_time == fullTime) {
+                if (azkarTimes.bayanyan == fullTime) {
                     bayanyan_selector.pause()
                     bayanyan_selector.currentTime = 0;
                     bayanyan_selector.play()
@@ -306,7 +341,7 @@ export default {
                     }, bayanyan_selector.duration * 1000);
                 }
 
-                if (ewaran_time == fullTime) {
+                if (azkarTimes.ewaran == fullTime) {
                     ewaran_selector.pause()
                     ewaran_selector.currentTime = 0;
                     ewaran_selector.play()
@@ -330,28 +365,27 @@ export default {
 </script>
 
 <style>
-
 @font-face {
-  font-family: 'Material Icons';
-  font-style: normal;
-  font-weight: 400;
-  src: url('../public/assets/fonts/Material Icons.woff2') format('woff2');
+    font-family: "Material Icons";
+    font-style: normal;
+    font-weight: 400;
+    src: url("../public/assets/fonts/Material Icons.woff2") format("woff2");
 }
 
 .material-icons {
-  font-family: 'Material Icons';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
+    font-family: "Material Icons";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
 }
 
 html {
@@ -413,8 +447,7 @@ i {
     width: 320px;
     height: 250px;
     background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)),
-        url('../public/assets/quran.jpg')
-            center bottom;
+        url("../public/assets/quran.jpg") center bottom;
     background-size: cover;
 }
 .player nav {
@@ -567,8 +600,7 @@ i {
 .player .music .song-2 .info .img.first,
 .player .music .song-3 .info .img.first,
 .player .music .song-4 .info .img.first {
-    background: url('../public/assets/quran.jpg')
-        center center;
+    background: url("../public/assets/quran.jpg") center center;
     background-size: cover;
 }
 

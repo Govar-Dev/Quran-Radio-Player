@@ -3,6 +3,8 @@
 import { app, protocol, BrowserWindow, shell, ipcMain, Menu } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 let getMp3Dir = '/mp3'
@@ -50,14 +52,23 @@ ipcMain.on('show-context-menu', (event) => {
         },
         { type: 'separator' },
         {
+            label: 'Edit Prayer Times',
+            click: () => {
+                shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\PrayerTimes.txt')
+            }
+        },
+        {
+            label: 'Edit Azkar Times',
+            click: () => {
+                shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\AzkarTimes.txt')
+            }
+        },
+        { type: 'separator' }, {
             label: 'Exit',
             click: () => { app.exit(0) }
-        },
-        { type: 'separator' },
-        {
+        }, { type: 'separator' }, {
             label: 'Version: 1.0',
             click: () => {
-                // win.webContents.openDevTools()
                 shell.openExternal('https://www.rwangroup.com/')
             }
         },
@@ -89,6 +100,12 @@ async function createWindow() {
             contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
         }
     })
+
+
+    ipcMain.on('show-developer-tools', (event, arg) => {
+        win.webContents.openDevTools()
+    })
+
 
 
     // win.webContents.openDevTools()

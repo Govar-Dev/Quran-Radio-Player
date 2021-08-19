@@ -2730,6 +2730,11 @@ check-types@^8.0.3:
   resolved "https://registry.npm.taobao.org/check-types/download/check-types-8.0.3.tgz#3356cca19c889544f2d7a95ed49ce508a0ecf552"
   integrity sha1-M1bMoZyIlUTy16le1JzlCKDs9VI=
 
+child_process@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/child_process/-/child_process-1.0.2.tgz#b1f7e7fc73d25e7fd1d455adc94e143830182b5a"
+  integrity sha1-sffn/HPSXn/R1FWtyU4UODAYK1o=
+
 chokidar@^2.1.8:
   version "2.1.8"
   resolved "https://registry.nlark.com/chokidar/download/chokidar-2.1.8.tgz#804b3a7b6a99358c3c5c61e71d8728f041cff917"
@@ -3933,28 +3938,10 @@ ejs@^3.1.6:
   dependencies:
     jake "^10.6.1"
 
-electron-builder@^22.11.7:
+electron-builder@^22.11.7, electron-builder@^22.2.0:
   version "22.11.7"
   resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-22.11.7.tgz#cd97a0d9f6e6d388112e66b4376de431cca4d596"
   integrity sha512-yQExSLt7Hbz/P8lLkZDdE/OnJJ7NCX+uiQcV+XIH0TeEZcD87ZnSqBBzGUN5akySU4BXXlrVZKeUsXACWrm5Kw==
-  dependencies:
-    "@types/yargs" "^16.0.2"
-    app-builder-lib "22.11.7"
-    builder-util "22.11.7"
-    builder-util-runtime "8.7.7"
-    chalk "^4.1.1"
-    dmg-builder "22.11.7"
-    fs-extra "^10.0.0"
-    is-ci "^3.0.0"
-    lazy-val "^1.0.5"
-    read-config-file "6.2.0"
-    update-notifier "^5.1.0"
-    yargs "^17.0.1"
-
-electron-builder@^22.2.0:
-  version "22.11.7"
-  resolved "https://registry.nlark.com/electron-builder/download/electron-builder-22.11.7.tgz?cache=0&sync_timestamp=1628522903322&other_urls=https%3A%2F%2Fregistry.nlark.com%2Felectron-builder%2Fdownload%2Felectron-builder-22.11.7.tgz#cd97a0d9f6e6d388112e66b4376de431cca4d596"
-  integrity sha1-zZeg2fbm04gRLma0N23kMcyk1ZY=
   dependencies:
     "@types/yargs" "^16.0.2"
     app-builder-lib "22.11.7"
