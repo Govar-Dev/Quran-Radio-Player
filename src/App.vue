@@ -75,7 +75,7 @@
 
 <script>
 import AudioPlayer from './Components/audio-player.vue'
-import prayer_times from './prayer_times.js';
+// import prayer_times from './prayer_times.js';
 import moment from 'moment'
 import Switches from 'vue-switches';
 import { ipcRenderer } from 'electron'
