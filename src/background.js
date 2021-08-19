@@ -20,10 +20,6 @@ ipcMain.on('close-app', (event, arg) => {
     app.exit(0)
 })
 
-
-
-
-// main
 ipcMain.on('show-context-menu', (event) => {
     const template = [{
             label: 'Refresh',
@@ -53,24 +49,21 @@ ipcMain.on('show-context-menu', (event) => {
         { type: 'separator' },
         {
             label: 'Edit Prayer Times',
-            click: () => {
-                shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\PrayerTimes.txt')
-            }
+            click: () => { shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\PrayerTimes.txt') }
         },
         {
             label: 'Edit Azkar Times',
-            click: () => {
-                shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\AzkarTimes.txt')
-            }
+            click: () => { shell.openExternal(app.getAppPath() + getMp3Dir + '\\..\\AzkarTimes.txt') }
         },
-        { type: 'separator' }, {
+        { type: 'separator' },
+        {
             label: 'Exit',
             click: () => { app.exit(0) }
-        }, { type: 'separator' }, {
+        },
+        { type: 'separator' },
+        {
             label: 'Version: 1.0',
-            click: () => {
-                shell.openExternal('https://www.rwangroup.com/')
-            }
+            click: () => { shell.openExternal('https://github.com/Govar-Dev') }
         },
     ]
 
